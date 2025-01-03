@@ -1,0 +1,10 @@
+streamlit
+PyPDF2
+pdfplumber
+langchain
+streamlit-pdf-viewer
+langchain-community
+streamlit-javascript
+pymupdf4llm
+openai
+python-dotenv
