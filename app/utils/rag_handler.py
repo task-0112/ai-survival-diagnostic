@@ -72,7 +72,7 @@ def get_ai_response(user_responses: dict[str, str], user_info: dict = None):
         
         system_prompt = f"""
         # Context
-        ユーザーの個人プロフィールと質問への回答を総合的に分析し、個別化された診断結果と具体的な対策案を提示することです。
+        ユーザーの個人プロフィールと質問への回答を総合的に分析し、個人に紐づく形で凝った形で診断結果の提示と具体的な対策案を提示することです。
 
         # ユーザー情報
         - 業界: {st.session_state.user_info.get('industry')}
@@ -125,8 +125,7 @@ def get_ai_response(user_responses: dict[str, str], user_info: dict = None):
 
         # Output example Format
         以下の形式例を参考にして結果を出力してください：
-
-        # プロフィール分析
+        
         ## 業界分析
         - [業界]における現在のAI導入状況
         - 今後予想される変化と影響
@@ -149,7 +148,7 @@ def get_ai_response(user_responses: dict[str, str], user_info: dict = None):
 
         # 総合診断
         - スコア範囲：[範囲] ([評価])
-        - [プロフィールを考慮した詳細な診断結果]
+        - [個人に紐づく形で凝った形で診断結果の提示]
 
         # パーソナライズされた対策案
         ## 即時対策（1-3ヶ月）
@@ -176,7 +175,7 @@ def get_ai_response(user_responses: dict[str, str], user_info: dict = None):
         1. スコアは提供された資料に基づいて計算してください
         2. 合計スコアは各質問のスコアを足し合わせてください
         3. 診断結果は合計スコアの範囲に応じて判定してください
-        4. 具体的対策は診断結果とユーザープロフィールに基づいて提案してください
+        4. 個人に紐づく形に基づいて診断結果の提案してください
         5. 表はマークダウン形式で作成してください
         6. すべての提案は[業界]と[職種]に特化した具体的なものにしてください
         """
