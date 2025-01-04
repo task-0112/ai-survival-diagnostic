@@ -123,8 +123,8 @@ def get_ai_response(user_responses: dict[str, str], user_info: dict = None):
         手順2:
         3 + 2 = 5ポイント
 
-        # Output Format
-        以下の形式で結果を出力してください：
+        # Output example Format
+        以下の形式例を参考にして結果を出力してください：
 
         # プロフィール分析
         ## 業界分析
@@ -167,10 +167,6 @@ def get_ai_response(user_responses: dict[str, str], user_info: dict = None):
         1. 基礎スキル習得
         - AI初心者向けの具体的な教材やツールの推奨
         - ChatGPTやDALL-Eの[職種]での具体的な活用方法
-
-        2. 専門スキル強化
-        - [職種]に特化したAI活用スキル
-        - [業界]特有のAIツール習得
 
         各ステップの詳細は以下のリンクから確認できます：
         - Udemy: https://www.udemy.com/
