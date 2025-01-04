@@ -4,7 +4,7 @@ import streamlit as st
 from app.utils.rag_handler import get_ai_response
 
 def display_questionnaire():    
-    # セッションステートの初期化
+    # セッションステートの初期化を拡張
     if "question_index" not in st.session_state:
         st.session_state.question_index = 0
     if "responses" not in st.session_state:
@@ -13,6 +13,10 @@ def display_questionnaire():
         st.session_state.show_result = False
     if "is_generating" not in st.session_state:
         st.session_state.is_generating = False
+    if "user_info" not in st.session_state:
+        st.session_state.user_info = {}
+    if "info_submitted" not in st.session_state:
+        st.session_state.info_submitted = False
 
     # 生成中の表示を最優先
     if st.session_state.is_generating:
@@ -20,7 +24,8 @@ def display_questionnaire():
         st.divider()
         with st.spinner("診断結果を生成中..."):
             try:
-                response = get_ai_response(st.session_state.responses)
+                # ユーザー情報も一緒に渡す
+                response = get_ai_response(st.session_state.responses, st.session_state.user_info)
                 st.session_state.result = response
                 st.session_state.show_result = True
                 st.session_state.is_generating = False
@@ -42,11 +47,71 @@ def display_questionnaire():
             st.session_state.show_result = False
             st.session_state.is_generating = False
             st.session_state.result = None
+            st.session_state.info_submitted = False
+            st.session_state.user_info = {}
             st.rerun()
         return
-    else:
-        st.markdown("### 質問の診断")
+
+    # ユーザー情報入力フォーム
+    if not st.session_state.info_submitted:
+        st.markdown("### プロフィール情報")
         st.divider()
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            industry = st.selectbox(
+                "業界を選択してください：",
+                ["IT・情報通信", "金融・保険", "製造", "建設・不動産", "小売・卸売", 
+                    "医療・福祉", "教育・研究", "公務員", "サービス業", "その他"]
+            )
+            
+            occupation = st.selectbox(
+                "職種を選択してください：",
+                [
+                    "管理職", 
+                    "専門・技術職（IT・エンジニア）",
+                    "専門・技術職（医療・福祉）",
+                    "専門・技術職（その他）",
+                    "事務職",
+                    "営業・販売職",
+                    "サービス職",
+                    "生産工程・製造",
+                    "建設・保守",
+                    "運輸・配送",
+                    "その他"
+                ]
+            )
+        
+        with col2:
+            experience = st.number_input(
+                "現在の職種での経験年数：",
+                min_value=0,
+                max_value=50,
+                value=5
+            )
+            
+            skills = st.multiselect(
+                "現在保有しているスキル（複数選択可）：",
+                ["IT・プログラミング", "データ分析", "経営・マネジメント", 
+                    "企画・マーケティング", "設計・製造", "営業・接客", 
+                    "医療・介護", "教育・研修", "専門資格", "語学"]
+            )
+
+        if st.button("診断を開始する"):
+            st.session_state.user_info = {
+                "industry": industry,
+                "occupation": occupation,
+                "experience": experience,
+                "skills": skills
+            }
+            st.session_state.info_submitted = True
+            st.rerun()
+        return
+
+    # 質問診断部分（info_submittedがTrueの場合に表示）
+    st.markdown("### 質問の診断")
+    st.divider()
 
     # 質問のリスト
     questions = [
