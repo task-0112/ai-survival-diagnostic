@@ -1,7 +1,8 @@
 # app/utils/questionnaire.py
+import os
 import streamlit as st
 
-from app.utils.rag_handler import get_ai_response
+from app.utils.rag_handler import chain_first_context_generate_response, chain_second_context_generate_response, get_ai_response, get_course_image
 
 def display_questionnaire():    
     # セッションステートの初期化を拡張
@@ -18,28 +19,98 @@ def display_questionnaire():
     if "info_submitted" not in st.session_state:
         st.session_state.info_submitted = False
 
-    # 生成中の表示を最優先
     if st.session_state.is_generating:
         st.markdown("### 質問の診断")
         st.divider()
+        
+        # 結果を表示するためのコンテナを準備
+        result_container = st.empty()
+        
         with st.spinner("診断結果を生成中..."):
             try:
-                # ユーザー情報も一緒に渡す
-                response = get_ai_response(st.session_state.responses, st.session_state.user_info)
-                st.session_state.result = response
+                # Step 1: 初心者/中級者判定
+                result_container.markdown("#### Step 1: ユーザーレベルを判定中...")
+                level_result = chain_first_context_generate_response(st.session_state.responses, st.session_state.user_info)
+                
+                # Step 2: コース推薦
+                result_container.markdown("#### Step 2: 最適なコースを選定中...")
+                if level_result.appraisal_type == "beginner":
+                    course_info = "https://saipon.jp/h/chatgpt/af_bl_m"
+                    course_image_path = None
+                else:
+                    course_result = chain_second_context_generate_response(st.session_state.responses, st.session_state.user_info)
+                    course_info = course_result.appraisal_type
+                    course_image_path = get_course_image(course_info)
+                
+                # Step 3: 診断結果生成
+                result_container.markdown("#### Step 3: 総合診断結果を生成中...")
+                final_response = get_ai_response(st.session_state.responses, st.session_state.user_info)
+                
+                # 結果を保存
+                st.session_state.result = {
+                    "text": final_response["text"],
+                    "level": level_result.appraisal_type,
+                    "course": course_info,
+                    "course_image_path": course_image_path
+                }
+                
                 st.session_state.show_result = True
                 st.session_state.is_generating = False
                 st.rerun()
+                
             except Exception as e:
                 st.error(f"エラーが発生しました: {str(e)}")
                 st.session_state.is_generating = False
-        return  # 生成中は他の要素を表示しない
+                
+            result_container.empty()  # 進捗表示をクリア
+        return
 
     # 判定結果の表示
     if st.session_state.show_result:
-        st.write("診断結果:")
-        st.write(st.session_state.result)
+        result = st.session_state.result
         
+        # 診断結果テキストの表示
+        st.markdown("### 診断結果")
+        st.divider()
+        st.write(result["text"])
+        
+        # コース推奨セクションの表示
+        st.divider()
+        
+        if result["level"] == "beginner":
+            st.markdown("""
+            #### AIの基礎から学べる入門セミナー
+            まずは基礎から始めましょう！以下のリンクからセミナーに参加できます。
+            """)
+            st.markdown(f"[セミナーに参加する]({result['course']})")
+        else:
+            st.markdown("#### あなたにおすすめのコース")
+            # 2カラムレイアウトの作成
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                # 画像の表示
+                if result["course_image_path"] and os.path.exists(result["course_image_path"]):
+                    st.image(
+                        result["course_image_path"],
+                        use_container_width=True  # use_column_widthからuse_container_widthに変更
+                    )
+            
+            with col2:
+                # コースの説明テキスト
+                course_descriptions = {
+                    "chatgpt": "ChatGPTを活用して業務効率を大幅に改善するための実践的なガイドです。",
+                    "image_ai": "画像生成AIを使って創造的な作品を生み出すためのテクニックが学べます。",
+                    "music_ai": "音楽生成AIを活用した革新的な音楽制作手法を習得できます。",
+                    "video_ai": "AIを使った効率的な動画制作の手法が身につきます。",
+                    "prompt_collection": "AIをより効果的に使いこなすための厳選されたプロンプト集です。",
+                    "document_creation": "AIを活用して資料作成を効率化する方法が学べます。"
+                }
+                st.markdown(f"**選定コース理由**")
+                st.write(course_descriptions.get(result['course'], ""))
+        
+        # 再診断ボタン
+        st.divider()
         if st.button("もう一度診断を行う"):
             # 状態をリセット
             st.session_state.question_index = 0

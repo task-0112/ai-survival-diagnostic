@@ -9,3 +9,4 @@ pymupdf4llm
 openai
 python-dotenv
 pdf2image
+langchain-openai
